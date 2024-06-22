@@ -26,10 +26,9 @@ export default function App() {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [friends, setFriends] = useState(initialFriends);
   const [selectedFriend, setSelectedFriend] = useState(null);
-  const [bill,setBill]=useState("");
+  const [bill, setBill] = useState("");
   const [myExpense, setMyExpense] = useState("");
-  const [XExpense, setXExpense] = useState("");
-  const [payBill, setPayBill] = useState("");
+  const [payBill, setPayBill] = useState("user");
 
   function handleShowAddFriend() {
     setShowAddFriend((show) => !show);
@@ -37,12 +36,18 @@ export default function App() {
   }
   function handleSelectedFriend(friend) {
     // setSelectedFriend(friend);
-    setSelectedFriend((cur)=>cur?.id===friend.id ? null : friend);
+    setSelectedFriend((cur) => (cur?.id === friend.id ? null : friend));
     setShowAddFriend(false);
   }
   function handleSetFriends(newfriend) {
     setFriends((friends) => [...friends, newfriend]);
     setShowAddFriend(false);
+  }
+  function handleSplitBill(value) {
+    console.log(value);
+    setFriends((friends) =>
+      friends.map((friend) => friend.id === selectedFriend.id ? {...friend,balance: friend.balance+value}:friend)
+    );
   }
 
   return (
@@ -69,10 +74,9 @@ export default function App() {
           onSetBill={setBill}
           myExpense={myExpense}
           onSetMyExpense={setMyExpense}
-          XExpense={XExpense}
-          onSetXExpense={setXExpense}
           payBill={payBill}
           setPayBill={setPayBill}
+          onSplitBill={handleSplitBill}
         />
       )}
     </div>
@@ -85,15 +89,19 @@ function FormSplitBill({
   onSetBill,
   onSetMyExpense,
   myExpense,
-  XExpense,
-  onSetXExpense,
   payBill,
   setPayBill,
+  onSplitBill,
 }) {
   function handleSubmit(e) {
     e.preventDefault();
+    if (!bill || !myExpense) return;
+
+    onSplitBill(payBill === "user" ? paidByFriend : -myExpense);
   }
-  
+
+  const paidByFriend = bill ? bill - myExpense : "";
+
   return (
     <form className="form-split-bill" onSubmit={handleSubmit}>
       <h2>Split a bill with {selectedFriend.name}</h2>
@@ -102,23 +110,21 @@ function FormSplitBill({
       <input
         type="text"
         value={bill}
-        onChange={(e) => onSetBill(e.target.value)}
+        onChange={(e) => onSetBill(Number(e.target.value))}
       ></input>
-
-      <label>🕴️ Your expenses</label>
+      <label>🕴️ Your expense</label>
       <input
         type="text"
         value={myExpense}
-        onChange={(e) => onSetMyExpense(e.target.value)}
+        onChange={(e) =>
+          onSetMyExpense(
+            Number(e.target.value) > bill ? myExpense : Number(e.target.value)
+          )
+        }
       ></input>
 
-      <label>🧑‍🤝‍🧑 {selectedFriend.name}'s expenses</label>
-      <input
-        type="text"
-        disabled
-        value={XExpense}
-        onChange={(e) => onSetXExpense(e.target.value)}
-      ></input>
+      <label>🧑‍🤝‍🧑 {selectedFriend.name}'s expense</label>
+      <input type="text" disabled value={paidByFriend}></input>
 
       <label>🤑 Who is paying the bill ?</label>
       <select value={payBill} onChange={(e) => setPayBill(e.target.value)}>
@@ -145,20 +151,19 @@ function FriendList({ friends, onSetSelectedFriend, selectedFriend }) {
 }
 
 function Friend({ friend, onSetSelectedFriend, selectedFriend }) {
-
-  const isSelected=selectedFriend?.id===friend.id;
+  const isSelected = selectedFriend?.id === friend.id;
   return (
     <li className={isSelected ? "selected" : ""}>
       <img src={friend.image} alt={friend.name} />
       <h3>{friend.name}</h3>
       {friend.balance < 0 && (
         <p className="red">
-          You owe {friend.name} {Math.abs(friend.balance)}
+          You owe {friend.name} {Math.abs(friend.balance)}$
         </p>
       )}
       {friend.balance > 0 && (
         <p className="green">
-          {friend.name} owes you {Math.abs(friend.balance)}
+          {friend.name} owes you {Math.abs(friend.balance)}$
         </p>
       )}
       {friend.balance === 0 && (
@@ -221,5 +226,3 @@ function FormAddFriend({ onAddFriend }) {
     </form>
   );
 }
-
-
