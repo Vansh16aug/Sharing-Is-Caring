@@ -98,6 +98,9 @@ function FormSplitBill({
     if (!bill || !myExpense) return;
 
     onSplitBill(payBill === "user" ? paidByFriend : -myExpense);
+    onSetBill("");
+    onSetMyExpense("");
+    setPayBill("");
   }
 
   const paidByFriend = bill ? bill - myExpense : "";
